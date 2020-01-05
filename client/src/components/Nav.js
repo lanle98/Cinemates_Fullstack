@@ -10,16 +10,16 @@ export class Nav extends Component {
   };
 
   onSubmit = e => {
-    e.preventDefault();
+    // e.preventDefault();
     this.props.searchMovie(this.state.input);
   };
   render() {
     return (
       <nav className="text-center p-3 mb-5">
         <h1>The Cinemates</h1>
-        <form onSubmit={this.onSubmit}>
+        <form onSubmit={this.onSubmit} action="/search" method="GET">
           <input
-            name="search"
+            name="input"
             placeholder="search movie"
             onChange={this.onChange}
           ></input>
