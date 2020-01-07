@@ -1,4 +1,5 @@
 import React, { Component } from "react";
+import { Link } from "react-router-dom";
 
 export class Nav extends Component {
   state = {
@@ -10,14 +11,20 @@ export class Nav extends Component {
   };
 
   onSubmit = e => {
-    // e.preventDefault();
+    e.preventDefault();
+    // e.target.input.value = "";
     this.props.searchMovie(this.state.input);
   };
   render() {
     return (
       <nav className="text-center p-3 mb-5">
-        <h1>The Cinemates</h1>
-        <form onSubmit={this.onSubmit} action="/search" method="GET">
+        <h1>
+          <Link to="/" onClick={this.props.home}>
+            The Cinemates
+          </Link>
+        </h1>
+
+        <form action={`/search?input=${this.state.input}`}>
           <input
             name="input"
             placeholder="search movie"

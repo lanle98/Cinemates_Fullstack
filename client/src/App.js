@@ -1,17 +1,27 @@
 import React, { Component } from "react";
-import { BrowserRouter as Router, Route } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Route,
+  Link,
+  Switch,
+  Redirect
+} from "react-router-dom";
 import Nav from "./components/Nav";
 import Header from "./components/Header";
 import List from "./components/List";
-import Filter from "./components/Filter";
+import Categories from "./components/Categories";
 import MovieInfo from "./components/MovieInfo";
+import queryString from "query-string";
+
 import InfiniteScroll from "react-infinite-scroll-component";
 import "./css/App.css";
 
 export class App extends Component {
   state = {
-    page: 1,
+    page: "1",
     movies: [],
+    search: undefined,
+    path: undefined,
 
     movieInfo: {
       title: undefined,
@@ -20,7 +30,27 @@ export class App extends Component {
       trailer: undefined
     }
   };
-  componentDidMount(page) {
+
+  // when component mount
+  componentDidMount() {
+    // this.setState({ movies: [] });
+    // this.home();
+
+    let value = queryString.parse(window.location.search);
+    let input = value.input;
+    if (input === undefined) {
+      this.home();
+    } else {
+      this.setState({ search: input });
+      this.searchMovie(input);
+    }
+
+    // this.searchMovie(this.state.search);
+  }
+
+  //home path
+  home = () => {
+    this.setState({ movies: [], search: undefined });
     fetch("/discover", {
       headers: {
         "Content-Type": "application/json"
@@ -31,8 +61,9 @@ export class App extends Component {
         this.parseData(data);
         console.log(data.total_pages);
       });
-  }
+  };
 
+  //parse data from fetch
   parseData = data => {
     this.setState({
       movies: this.state.movies.concat(data.results),
@@ -40,12 +71,18 @@ export class App extends Component {
     });
   };
 
-  loadMore = () => {
-    let page_number = this.state.page;
+  //infinite load
+  // loadMore = () => {
+  //   this.setState({ page: this.state.page + 1 });
+  //   fetch(`/categories/${this.state.path}?page=${this.state.page}`)
+  //     .then(res => res.json())
+  //     .then(data => {
+  //       this.parseData(data);
+  //       console.log(data);
+  //     });
+  // };
 
-    // this.componentDidMount(page_number + 1);
-  };
-
+  //show info on click
   showInfo = (overview, backdrop_path, id, title) => {
     console.log("clicked");
     fetch(
@@ -65,6 +102,7 @@ export class App extends Component {
     document.querySelector(".modal").classList.add("show");
   };
 
+  //hover effect
   mouseEnter = e => {
     let movies = document.querySelectorAll(".movie");
     movies.forEach(movie => {
@@ -79,10 +117,24 @@ export class App extends Component {
     });
   };
 
-  searchMovie = e => {
-    console.log(e);
-    this.setState({ movies: [] });
-    fetch("/search")
+  //search path
+  searchMovie = input => {
+    console.log(input);
+    this.setState({ movies: [], search: input });
+    fetch(`/search?input=${input}&page=${this.state.page}`)
+      .then(res => res.json())
+      .then(data => {
+        this.parseData(data);
+        console.log(data);
+      });
+  };
+
+  //categories path
+  categories = e => {
+    // e.preventDefault();
+    let path = e.target.innerHTML.replace(/ /g, "").toLowerCase();
+    this.setState({ movies: [], path: path });
+    fetch(`/categories/${path}?page=${this.state.page}`)
       .then(res => res.json())
       .then(data => {
         this.parseData(data);
@@ -94,69 +146,75 @@ export class App extends Component {
     return (
       <Router>
         <div>
-          <Nav searchMovie={this.searchMovie} />
-          <Header
-            mouseEnter={this.mouseEnter}
-            mouseLeave={this.mouseLeave}
-            movies={this.state.movies}
-            showInfo={this.showInfo}
-          />
-          <Filter />
           <MovieInfo movieInfo={this.state.movieInfo} />
-          <Route
-            path="/"
-            render={props => (
-              <React.Fragment>
-                <div className="container-fluid">
-                  <InfiniteScroll
-                    dataLength={this.state.movies.length}
-                    next={this.loadMore}
-                    hasMore={true}
-                    className="row movie-wrapper"
-                    loader={
-                      <div className="loader" key={0}>
-                        Loading ...
-                      </div>
-                    }
-                  >
-                    <List
-                      mouseEnter={this.mouseEnter}
-                      mouseLeave={this.mouseLeave}
-                      movies={this.state.movies}
-                      showInfo={this.showInfo}
-                    />
-                  </InfiniteScroll>
-                </div>
-              </React.Fragment>
-            )}
-          />
-          <Route
-            path="/search"
-            render={props => (
-              <React.Fragment>
-                <div className="container-fluid">
-                  <InfiniteScroll
-                    dataLength={this.state.movies.length}
-                    next={this.loadMore}
-                    hasMore={true}
-                    className="row movie-wrapper"
-                    loader={
-                      <div className="loader" key={0}>
-                        Loading ...
-                      </div>
-                    }
-                  >
-                    <List
-                      mouseEnter={this.mouseEnter}
-                      mouseLeave={this.mouseLeave}
-                      movies={this.state.movies}
-                      showInfo={this.showInfo}
-                    />
-                  </InfiniteScroll>
-                </div>
-              </React.Fragment>
-            )}
-          />
+          <Nav home={this.home} searchMovie={this.searchMovie} />
+          <Switch>
+            <Redirect exact from="/" to="/home" />
+            <Route
+              path="/home"
+              render={props => (
+                <React.Fragment>
+                  <Header
+                    mouseEnter={this.mouseEnter}
+                    mouseLeave={this.mouseLeave}
+                    movies={this.state.movies}
+                    showInfo={this.showInfo}
+                  />
+
+                  <Categories categories={this.categories} />
+
+                  <div className="container-fluid">
+                    <InfiniteScroll
+                      dataLength={this.state.movies.length}
+                      next={this.loadMore}
+                      hasMore={true}
+                      className="row movie-wrapper"
+                      loader={
+                        <div className="loader" key={0}>
+                          Loading ...
+                        </div>
+                      }
+                    >
+                      <List
+                        mouseEnter={this.mouseEnter}
+                        mouseLeave={this.mouseLeave}
+                        movies={this.state.movies}
+                        showInfo={this.showInfo}
+                      />
+                    </InfiniteScroll>
+                  </div>
+                </React.Fragment>
+              )}
+            />
+
+            <Route
+              path="/search"
+              render={props => (
+                <React.Fragment>
+                  <div className="container-fluid">
+                    <InfiniteScroll
+                      dataLength={this.state.movies.length}
+                      next={this.loadMore}
+                      hasMore={true}
+                      className="row movie-wrapper"
+                      loader={
+                        <div className="loader" key={0}>
+                          Loading ...
+                        </div>
+                      }
+                    >
+                      <List
+                        mouseEnter={this.mouseEnter}
+                        mouseLeave={this.mouseLeave}
+                        movies={this.state.movies}
+                        showInfo={this.showInfo}
+                      />
+                    </InfiniteScroll>
+                  </div>
+                </React.Fragment>
+              )}
+            />
+          </Switch>
         </div>
       </Router>
     );
