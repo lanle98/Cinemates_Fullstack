@@ -33,9 +33,6 @@ export class App extends Component {
 
   // when component mount
   componentDidMount() {
-    // this.setState({ movies: [] });
-    // this.home();
-
     let value = queryString.parse(window.location.search);
     let input = value.input;
     if (input === undefined) {
