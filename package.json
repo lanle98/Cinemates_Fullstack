@@ -7,7 +7,7 @@
     "start": "node app",
     "server": "node app.js",
     "client": "npm start --prefix client",
-    "heroku-postbuild": "concurrently \"npm run server\" \"npm run client\""
+    "heroku-postbuild": "cd client && npm install && npm run build"
   },
   "author": "",
   "license": "ISC",
